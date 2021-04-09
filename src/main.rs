@@ -8,7 +8,7 @@ use lib::rpc::rpc_message::RpcMessage;
 use lib::rpc::rpc_server::RpcServer;
 
 fn main() -> Result<()> {
-    task::block_on(RpcServer::accept_loop())
+    // task::block_on(RpcServer::accept_loop())
     //let content = "Hello World!".to_string();
     //let rpc_message = RpcMessage::ContentMessage { content };
     //let bytes = bincode::serialize(&rpc_message).unwrap();
@@ -23,6 +23,6 @@ fn main() -> Result<()> {
     //    let msg = "Hello World!";
     //    let mut buf = vec![0u8; 1024];
     //    let n = stream.peek(&mut buf).await?;
-    //    Ok(())
+    Ok(())
     //})
 }

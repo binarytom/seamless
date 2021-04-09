@@ -16,6 +16,9 @@ impl RpcServer {
         rpc_server
     }
 
+    /// accept loop for rpc_server
+    ///
+    ///
     pub async fn accept_loop(rpc_server: &mut RpcServer) -> io::Result<()> {
         let listener = TcpListener::bind("127.0.0.1:6666").await?;
 
@@ -23,7 +26,8 @@ impl RpcServer {
         while let Some(stream) = incoming.next().await {
             let stream = stream?;
             task::spawn(async {
-                rpc_server.connection_loop().await;
+                let mut client_protocol = RpcProtocol::new(stream);
+                RpcServer::connection_loop(&mut client_protocol).await;
             });
         }
         Ok(())
@@ -31,10 +35,10 @@ impl RpcServer {
 
     pub fn send(&mut self, msg: RpcMessage) {
         let serialized = bincode::serialize(&msg).unwrap();
-        self.protocol.write(&serialized);
+        // self.protocol.write(&serialized);
     }
 
-    pub async fn connection_loop(rpc_protocol: &mut RpcProtocol, tcp_stream: &mut TcpStream) {
+    pub async fn connection_loop(rpc_protocol: &mut RpcProtocol) {
         loop {
             let ret = rpc_protocol.read().await.unwrap();
             let deserialized = bincode::deserialize::<RpcMessage>(&ret).unwrap();

@@ -3,6 +3,8 @@ use async_std::net::TcpStream;
 use async_std::prelude::*;
 use std::sync::Arc;
 
+/// rpc protocol is a protocol based on tcp
+/// provide read and write from net.
 pub struct RpcProtocol {
     size_buf: [u8; 4],
     tcp_stream_arc: Arc<TcpStream>,
