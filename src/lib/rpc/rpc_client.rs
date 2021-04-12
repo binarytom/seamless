@@ -1,32 +1,24 @@
-use crate::lib::rpc::rpc_message::RpcMessage;
-use crate::lib::rpc::rpc_protocol::RpcProtocol;
-use async_std::net::TcpStream;
+use crate::lib::rpc::rpc_server_proxy::RpcServerProxy;
+use async_std::io::Result;
+use async_std::net::{TcpStream, ToSocketAddrs};
 
-struct RpcClient {
-    protocol: RpcProtocol,
-}
+pub struct RpcClient {}
 
 impl RpcClient {
-    pub async fn init() -> RpcClient {
-        let mut tcp_server = TcpStream::connect("127.0.0.1:6666").await.unwrap();
-        let mut protocol = RpcProtocol::new(tcp_server);
-        let mut rpc_client = RpcClient { protocol };
-
-        rpc_client.connection_loop();
-
-        rpc_client
-    }
-
-    pub fn send(&mut self, msg: RpcMessage) {
-        let serialized = bincode::serialize(&msg).unwrap();
-        self.protocol.write(&serialized);
-    }
-
-    pub async fn connection_loop(&mut self) {
-        loop {
-            let ret = self.protocol.read().await.unwrap();
-            let deserialized = bincode::deserialize::<RpcMessage>(&ret).unwrap();
-            println!("recv msg: {:?}", deserialized);
-        }
+    /// connect to a server
+    /// Examples
+    ///
+    /// connect to server
+    ///
+    /// ```no_run
+    /// let mut server_proxy = RpcClient::connect("127.0.0.1:10666").await;
+    /// server_proxy.connection_loop().await;
+    /// ```
+    ///
+    pub async fn connect(addr: impl ToSocketAddrs) -> Result<RpcServerProxy> {
+        println!("connect to server!");
+        let stream = TcpStream::connect(addr).await?;
+        let rpc_server_proxy = RpcServerProxy::new(stream);
+        Ok(rpc_server_proxy)
     }
 }

@@ -1,48 +1,39 @@
-use crate::lib::rpc::rpc_message::RpcMessage;
-use crate::lib::rpc::rpc_protocol::RpcProtocol;
+use crate::lib::rpc::rpc_client_proxy::RpcClientProxy;
 use async_std::io;
-use async_std::net::{TcpListener, TcpStream};
+use async_std::net::{TcpListener, ToSocketAddrs};
 use async_std::prelude::*;
-use async_std::task;
+use std::sync::mpsc;
 
-pub struct RpcServer {
-    tcp_clients: Vec<RpcProtocol>,
-}
+pub struct RpcServer {}
 
 impl RpcServer {
-    pub async fn init() -> RpcServer {
-        let tcp_clients = vec![];
-        let rpc_server = RpcServer { tcp_clients };
-        rpc_server
-    }
-
     /// accept loop for rpc_server
     ///
+    /// # Examples
+    /// start a accept loop
     ///
-    pub async fn accept_loop(rpc_server: &mut RpcServer) -> io::Result<()> {
-        let listener = TcpListener::bind("127.0.0.1:6666").await?;
+    ///``` no_run
+    /// let (sender, receiver) = mpsc::channel();
+    /// task::spawn(async {
+    ///     RpcServer::accept_loop("127.0.0.1:10666", sender).await;
+    /// });
+    /// for mut client_proxy in receiver {
+    ///     ....
+    /// }
+    ///```
+    pub async fn accept_loop(
+        to_socket_addrs: impl ToSocketAddrs,
+        sender: mpsc::Sender<RpcClientProxy>,
+    ) -> io::Result<()> {
+        let listener = TcpListener::bind(to_socket_addrs).await?;
 
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
+            println!("receive accept of client");
             let stream = stream?;
-            task::spawn(async {
-                let mut client_protocol = RpcProtocol::new(stream);
-                RpcServer::connection_loop(&mut client_protocol).await;
-            });
+
+            sender.send(RpcClientProxy::new(stream)).unwrap();
         }
         Ok(())
-    }
-
-    pub fn send(&mut self, msg: RpcMessage) {
-        let serialized = bincode::serialize(&msg).unwrap();
-        // self.protocol.write(&serialized);
-    }
-
-    pub async fn connection_loop(rpc_protocol: &mut RpcProtocol) {
-        loop {
-            let ret = rpc_protocol.read().await.unwrap();
-            let deserialized = bincode::deserialize::<RpcMessage>(&ret).unwrap();
-            println!("recv msg: {:?}", deserialized);
-        }
     }
 }
