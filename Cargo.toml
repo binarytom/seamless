@@ -13,3 +13,6 @@ bincode = "1.2.1"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser"] }
+
+[target.'cfg(target_os="linux")'.dependencies]
+x11rb = {version = "0.8.1", features = ["xfixes", "xinput"]}
